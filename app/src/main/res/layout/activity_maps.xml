@@ -51,6 +51,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent">
                             <TextView
+                                android:id="@+id/goplcae"
                                 android:layout_marginStart="@dimen/_10sdp"
                                 android:text="from"
                                 android:textSize="@dimen/_15sdp"
@@ -99,7 +100,7 @@
                                 android:textColor="#009a43"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"/>
-                            <EditText
+                            <TextView
                                 android:id="@+id/from"
                                 android:background="@null"
                                 android:layout_marginStart="@dimen/_10sdp"

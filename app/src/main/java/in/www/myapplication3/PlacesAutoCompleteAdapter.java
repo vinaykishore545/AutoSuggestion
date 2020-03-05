@@ -42,11 +42,14 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
     private CharacterStyle STYLE_NORMAL;
     private final PlacesClient placesClient;
     private ClickListener clickListener;
-    public PlacesAutoCompleteAdapter(Context context) {
+    CharSequence lii;
+    public PlacesAutoCompleteAdapter(Context context, ArrayList<PlaceAutocomplete> mResultList) {
         mContext = context;
+        mResultList=mResultList;
         STYLE_BOLD = new StyleSpan(Typeface.BOLD);
         STYLE_NORMAL = new StyleSpan(Typeface.NORMAL);
         placesClient = com.google.android.libraries.places.api.Places.createClient(context);
+        this.notifyDataSetChanged();
     }
 
     @Override
@@ -55,8 +58,12 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
+        /*        Toast.makeText(mContext,constraint,Toast.LENGTH_SHORT).show();*/
+                lii=constraint;
+      /*          Toast.makeText(mContext,lii,Toast.LENGTH_SHORT).show();*/
                 // Skip the autocomplete query if no constraints are given.
                 if (constraint != null) {
+
                     // Query the autocomplete API for the (constraint) search string.
                     mResultList = getPredictions(constraint);
                     if (mResultList != null) {
@@ -76,6 +83,8 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
                 } else {
                     // The API did not return any results, invalidate the data set.
                     //notifyDataSetInvalidated();
+                    notifyDataSetChanged();
+
                 }
             }
         };
@@ -88,7 +97,7 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
     public interface ClickListener {
         void click(Place place);
     }
-    private ArrayList<PlaceAutocomplete> getPredictions(CharSequence constraint) {
+    private ArrayList<PlaceAutocomplete> getPredictions(    final   CharSequence constraint) {
 
         final ArrayList<PlaceAutocomplete> resultList = new ArrayList<>();
 
@@ -125,7 +134,7 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
 
             return resultList;
         } else {
-            return resultList;
+            return null;
         }
     }
 
@@ -139,63 +148,43 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
     }
     @Override
     public void onBindViewHolder(@NonNull final PlacesAutoCompleteAdapter.PredictionHolder holder, final int position) {
-       holder.area1.setText(mResultList.get(position).address);
-       holder.area1.setOnClickListener(new View.OnClickListener() {
-           @Override
-           public void onClick(View view) {
-               String x= (String) mResultList.get(position).area;
-               String y=(String) mResultList.get(position).address;
-               String z=x+""+y;
-               /*Toast.makeText(view.getContext(),z,Toast.LENGTH_SHORT).show();*/
-               Intent i =new Intent(view.getContext(),MapsActivity.class);
-               //get text for current item
-               String textGet = z;
-               //put text into a bundle and add to intent
-               i.putExtra("text", textGet);
-               //begin activity
-               holder.itemView.getContext().startActivity(i);
-           }
-       });
+
+
+        holder.area1.setText(mResultList.get(position).address);
+        holder.area1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String l=(String) mResultList.get(position).locality;
+                String x=(String) mResultList.get(position).area;
+                String y=(String)mResultList.get(position).address;
+                String z=y+""+l+""+x;
+                Intent i=new Intent(mContext,MapsActivity.class);
+                i.putExtra("name",z);
+                holder.itemView.getContext().startActivity(i);
+
+
+            }
+        });
+
 
     }
+
 
     @Override
     public int getItemCount() {
+
         return mResultList.size();
+
+    }
+    public PlaceAutocomplete getItem(int position) {
+        return mResultList.get(position);
     }
 
-    public class PredictionHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView area1;
+    public class PredictionHolder extends RecyclerView.ViewHolder  {
+        TextView area1,address;
         public PredictionHolder(@NonNull View itemView) {
             super(itemView);
             area1=itemView.findViewById(R.id.area);
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            PlaceAutocomplete item = mResultList.get(getAdapterPosition());
-            if (view.getId() == R.id.area) {
-
-                String placeId = String.valueOf(item.placeId);
-
-                List<Place.Field> placeFields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS);
-                FetchPlaceRequest request = FetchPlaceRequest.builder(placeId, placeFields).build();
-                placesClient.fetchPlace(request).addOnSuccessListener(new OnSuccessListener<FetchPlaceResponse>() {
-                    @Override
-                    public void onSuccess(FetchPlaceResponse response) {
-                        Place place = response.getPlace();
-                        clickListener.click(place);
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        if (exception instanceof ApiException) {
-                            Toast.makeText(mContext, exception.getMessage() + "", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
 
 
         }
@@ -203,12 +192,14 @@ public class PlacesAutoCompleteAdapter extends RecyclerView.Adapter<PlacesAutoCo
     public class PlaceAutocomplete {
 
         public CharSequence placeId;
-        public CharSequence address, area;
+        public CharSequence address, area,locality;
 
         PlaceAutocomplete(CharSequence placeId, CharSequence area, CharSequence address) {
             this.placeId = placeId;
             this.area = area;
             this.address = address;
+
+
         }
 
         @Override
